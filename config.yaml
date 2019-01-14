@@ -9,5 +9,5 @@ news_sites:
     url: https://elpais.com
     queries:
       home_page_article_links: '.articulo-titulo a'
-      article_body: ''
-      article_title: ''
+      article_body: '.articulo-cuerpo'
+      article_title: '.articulo-titulo'
