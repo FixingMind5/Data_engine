@@ -22,21 +22,31 @@ def main(filename):
     df = _fill_missing_titles(df)
     df = _generate_uid_for_rows(df)
     df = _remove_new_lines_from_body(df)
-    column_name = input('Name of column is...\t')
-    df['n_tokenize_{}'.format(column_name)] = _tokenizing_title_(df, column_name)
+    # column_name = input('Name of column is...\t')  MÍA
+    # df['n_tokenize_{}'.format(column_name)] = _tokenizing_title_(df, column_name) MÍA
+    df = _tokenizing_title_(df, 'title')
+    df = _tokenizing_title_(df, 'body')
+    df = _remove_duplicated_values(df, 'title')
+    df = _drop_rows_with_empty_data(df)
+    _save_data(df, filename)
+
     return df
 
 
 def _tokenizing_title_(df, column_name):
     logger.info('Ready for tokenize {}'.format(column_name))
 
-    return (df
+    n_tokens = (df
                 .dropna()
                 .apply(lambda row: nltk.word_tokenize(row[column_name]), axis = 1)
                 .apply(lambda tokens: list(filter(lambda token: token.isalpha(), tokens)))
                 .apply(lambda tokens: list(map(lambda token: token.lower(), tokens)))
                 .apply(lambda valid_word_list: len(valid_word_list))
            )
+
+    df['n_tokens_{}'.format(column_name)] = n_tokens
+
+    return df
 
 
 def _read_data(filename):
@@ -113,6 +123,26 @@ def _remove_new_lines_from_body(df):
     df['body'] = stripped_body
 
     return df
+
+
+def _remove_duplicated_values(df, column_name):
+    logger.info('Removing duplicated values from {}'.format(column_name))
+
+    df.drop_duplicates(subset=[column_name], keep='first', inplace=True)
+
+    return df
+
+
+def _drop_rows_with_empty_data(df):
+    logger.info('Cleaning rows with missing data')
+    return df.dropna()
+
+
+def _save_data(df, filename):
+    clean_filename = 'clean_{}'.format(filename)
+    logger.info('saving data at {}'.format(clean_filename))
+
+    df.to_csv(clean_filename)
 
 
 if __name__ == '__main__':
