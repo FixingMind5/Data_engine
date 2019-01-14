@@ -1,9 +1,13 @@
 import argparse
 import logging
-from urllib.parse import urlparse
 import pandas as pd
 import hashlib
+import nltk
 
+from nltk.corpus import stopwords
+from urllib.parse import urlparse
+
+stopwords = set(stopwords.words('spanish'))
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
@@ -18,8 +22,21 @@ def main(filename):
     df = _fill_missing_titles(df)
     df = _generate_uid_for_rows(df)
     df = _remove_new_lines_from_body(df)
-
+    column_name = input('Name of column is...\t')
+    df['n_tokenize_{}'.format(column_name)] = _tokenizing_title_(df, column_name)
     return df
+
+
+def _tokenizing_title_(df, column_name):
+    logger.info('Ready for tokenize {}'.format(column_name))
+
+    return (df
+                .dropna()
+                .apply(lambda row: nltk.word_tokenize(row[column_name]), axis = 1)
+                .apply(lambda tokens: list(filter(lambda token: token.isalpha(), tokens)))
+                .apply(lambda tokens: list(map(lambda token: token.lower(), tokens)))
+                .apply(lambda valid_word_list: len(valid_word_list))
+           )
 
 
 def _read_data(filename):
@@ -99,6 +116,15 @@ def _remove_new_lines_from_body(df):
 
 
 if __name__ == '__main__':
+
+    if nltk.tokenize.punkt:
+        pass
+    elif nltk.stopwords:
+        pass
+    else:
+        nltk.download('punkt')
+        nltk.download('stopwords')
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('filename',
